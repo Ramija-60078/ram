@@ -1,0 +1,98 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+data = {
+    "Candidate": [
+        "Ravi",
+        "Ahmed",
+        "Priya",
+        "John",
+        "Sara",
+        "Kiran",
+        "David"
+    ],
+    "Resume": [
+        "Python Java SQL Machine Learning Flask",
+        "Java Spring Boot MySQL Docker",
+        "Python Data Science Pandas NumPy",
+        "C++ Networking Linux",
+        "Python Flask SQL Docker Kubernetes",
+        "Python Django REST API PostgreSQL",
+        "JavaScript React Node MongoDB"
+    ]
+}
+
+df = pd.DataFrame(data)
+
+job_description = """
+Python
+Flask
+SQL
+Docker
+Machine Learning
+REST API
+"""
+
+scores = []
+
+for resume in df["Resume"]:
+    documents = [job_description, resume]
+
+    tfidf = TfidfVectorizer()
+    matrix = tfidf.fit_transform(documents)
+
+    similarity = cosine_similarity(
+        matrix[0:1],
+        matrix[1:2]
+    )
+
+    scores.append(similarity[0][0] * 100)
+
+df["Match Score"] = np.round(scores, 2)
+
+df = df.sort_values(
+    by="Match Score",
+    ascending=False
+)
+
+print("\nAI Resume Screening Results\n")
+print(df)
+
+best_candidate = df.iloc[0]
+
+print("\nTop Candidate")
+print("Name :", best_candidate["Candidate"])
+print("Score:", best_candidate["Match Score"], "%")
+
+df.to_csv("resume_screening_results.csv", index=False)
+
+plt.figure(figsize=(10, 6))
+
+bars = plt.bar(
+    df["Candidate"],
+    df["Match Score"]
+)
+
+plt.title("AI Resume Screening System")
+plt.xlabel("Candidates")
+plt.ylabel("Match Score (%)")
+
+for bar in bars:
+    height = bar.get_height()
+
+    plt.text(
+        bar.get_x() + bar.get_width() / 2,
+        height + 1,
+        f"{height:.1f}",
+        ha="center"
+    )
+
+plt.tight_layout()
+
+plt.savefig("resume_screening_graph.png")
+
+plt.show()
